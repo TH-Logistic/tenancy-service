@@ -1,0 +1,41 @@
+version: '3'
+
+services:
+  mongo:
+    image: mongo
+    container_name: mongo_container
+    profiles:
+      - dev
+    ports:
+      - 27017:27017
+    expose:
+      - 27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD
+    volumes:
+      - ./docker/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    restart: always
+
+  user_service:
+    image: registry.thinhlh.com/user_service
+    container_name: user_service_container
+    networks:
+      - app_network
+    ports:
+      - 8001:3000
+    environment:
+      - MONGO_INITDB_HOST
+      - MONGO_INITDB_PORT
+      - MONGO_INITDB_DATABASE
+      - MONGO_INITDB_ROOT_USERNAME
+      - MONGO_INITDB_ROOT_PASSWORD
+      - AUTH_HOST
+      - AUTH_PORT
+    depends_on:
+      - mongo
+
+networks:
+  app_network:
+    driver: bridge
+    external: true
