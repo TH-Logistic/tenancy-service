@@ -17,13 +17,11 @@ services:
       - ./docker/mongo/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     restart: always
 
-  user_service:
-    image: registry.thinhlh.com/user_service
-    container_name: user_service_container
-    networks:
-      - app_network
+  tenant_service:
+    image: registry.thinhlh.com/tenant_service
+    container_name: tenant_container
     ports:
-      - 8001:3000
+      - 8002:3000
     environment:
       - MONGO_INITDB_HOST
       - MONGO_INITDB_PORT
