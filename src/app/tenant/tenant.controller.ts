@@ -3,8 +3,11 @@ import { TenantService } from "./tenant.service";
 import { Tenant } from "./entities/tenant.schema";
 import { CreateTenantDTO } from "./dto/create-tenant.dto";
 import { UpdateTenantDTO } from "./dto/update-tenant.dto";
+import { Roles } from "src/config/guard/role.decorator";
+import { UserRole } from "../user/entities/role";
 
 @Controller("/tenants")
+@Roles()
 export class TenantController {
     constructor(
         private readonly tenantService: TenantService

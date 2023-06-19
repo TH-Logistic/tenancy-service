@@ -1,0 +1,3 @@
+[submodule "temp/infrastructure"]
+	path = temp/infrastructure
+	url = https://github.com/TH-Logistic/infrastructure.git

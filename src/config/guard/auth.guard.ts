@@ -23,6 +23,10 @@ export class AppGuard implements CanActivate {
         const request = context.switchToHttp().getRequest() as Request;
         const ignoreRole = requiredRoles.length == 0
 
+        if (ignoreRole) {
+            return true
+        }
+
         try {
             if (request.headers.authorization) {
                 const token = request.headers.authorization.trim();

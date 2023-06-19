@@ -1,7 +1,27 @@
-import { IsEmail, IsEnum, IsNumberString, IsOptional, IsString, IsUrl, MinLength, isNumberString } from "class-validator";
+import { IsEmail, IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUrl, MinLength, isNumberString } from "class-validator";
 import { TenantStatus } from "../entities/tenant.status";
 
-export class CreateTenantDTO {
+class TenantDetail {
+    @IsString()
+    @IsOptional()
+    domain: string;
+
+    @IsString()
+    dbUsername: string;
+
+    @IsString()
+    @IsNotEmpty()
+    dbPassword: string;
+
+    @IsString()
+    @IsNotEmpty()
+    keypairName: string;
+
+    @IsString()
+    @IsNotEmpty()
+    secretKey: string;
+}
+export class CreateTenantDTO extends TenantDetail {
     @IsString()
     name: string;
 
