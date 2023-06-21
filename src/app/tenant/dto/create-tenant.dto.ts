@@ -7,6 +7,9 @@ class TenantDetail {
     domain: string;
 
     @IsString()
+    dbName: string;
+
+    @IsString()
     dbUsername: string;
 
     @IsString()

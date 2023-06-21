@@ -40,41 +40,46 @@ type TenantCreateVars = {
     dbPassword: string;
     dbName: string;
     appSecret: string;
+    tenantId: string;
 }
 
 const runScript = (
     vars: TenantCreateVars,
     onData?: (data: any) => void,
     onError?: (error: any) => void,
-    onClose?: (status: number) => void
-) => {
+): Promise<number> => {
     const runner = new ScriptRunner();
-    runner.run(
-        "cd", [
-        'temp',
-        '&&',
-        'terraform',
-        'init',
-        '&&',
-        'terraform',
-        'apply',
-        `-var "aws_access_key=${vars.awsAccessKey}"`,
-        `-var "aws_secret_key=${vars.awsSecretKey}"`,
-        `-var "aws_session_token=${vars.awsSessionToken}"`,
-        `-var "aws_region=${vars.awsRegion}"`,
-        `-var "key_pair_name=${vars.keyPairName}"`,
-        `-var "mongo_db_name=${vars.dbName}"`,
-        `-var "mongo_username=${vars.dbUserName}"`,
-        `-var "mongo_password=${vars.dbPassword}"`,
-        `-var "app_secret=${vars.appSecret}"`,
-        `-var "rds_db_name=${vars.dbName}"`,
-        `-var "rds_username=${vars.dbUserName}"`,
-        `-var "rds_password=${vars.dbPassword}"`,
-        '-auto-approve'
-    ],
-        ({}),
-        onData, onError, onClose
-    );
+
+    return new Promise((resolve, reject) => {
+        runner.run(
+            "sh", [
+            "./src/external/initialize-tenant.sh",
+            vars.awsAccessKey,
+            vars.awsSecretKey,
+            vars.awsSessionToken,
+            vars.awsRegion,
+            vars.keyPairName,
+            vars.dbName,
+            vars.dbUserName,
+            vars.dbPassword,
+            vars.appSecret,
+            vars.dbName,
+            vars.dbUserName,
+            vars.dbPassword,
+            vars.tenantId
+        ],
+            ({}),
+            onData,
+            onError,
+            (status) => {
+                if (status === 0) {
+                    resolve(status);
+                } else {
+                    reject(status);
+                }
+            }
+        );
+    });
 }
 
 export { runScript };

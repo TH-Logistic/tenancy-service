@@ -22,14 +22,6 @@ export class TenantService {
     }
 
     async getTenants(): Promise<Tenant[]> {
-        const scriptRunner = new ScriptRunner();
-
-        scriptRunner.run("sh", ["./src/external/initialize-tenant.sh"], undefined, (data) => {
-            console.log(data.toString())
-        }, (err) => {
-            console.log(err.toString())
-        })
-
         return this
             .tenantModel
             .find({}, {}, {})
@@ -55,29 +47,33 @@ export class TenantService {
             {
                 awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
                 awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
-                awsSessionToken: this.configService.get('AWS_ACCESS_SESSION_TOKEN'),
-                dbName: 'thlogistic',
+                awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
+                dbName: createTenantDTO.dbName,
                 dbPassword: createTenantDTO.dbPassword,
                 dbUserName: createTenantDTO.dbUsername,
                 awsRegion: 'us-east-1',
                 appSecret: createTenantDTO.secretKey,
-                keyPairName: createTenantDTO.keypairName
+                keyPairName: createTenantDTO.keypairName,
+                tenantId: createdTenant.id
             },
             (data) => {
-                console.log(data.toString())
-            }, (err) => {
-                console.log(error)
+                console.log(data.toString());
+            }, async (err) => {
+                console.log(error.toString());
+                await createdTenant.deleteOne();
+            }).catch(res => {
                 // TODO send email
-            }, (status) => {
+            }).then((status) => {
                 console.log(`Completed with status ${status}`)
+                if (status === 0) {
 
-                this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
-                    destinationEmail: createTenantDTO.contactEmail,
-                    name: createTenantDTO.name,
-                    packageName: "Premium"
-                }));
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
+                        destinationEmail: createTenantDTO.contactEmail,
+                        name: createTenantDTO.name,
+                        packageName: "Premium"
+                    }));
+                }
             });
-
 
 
         return createdTenant;

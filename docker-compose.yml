@@ -11,6 +11,7 @@ services:
     expose:
       - 27017
     environment:
+      - MONGO_INITDB_DATABASE
       - MONGO_INITDB_ROOT_USERNAME
       - MONGO_INITDB_ROOT_PASSWORD
     volumes:

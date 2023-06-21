@@ -17,13 +17,6 @@ import { TenantModule } from './tenant/tenant.module';
       ...HttpModule.register({}),
       global: true,
     },
-    // MongooseModule.forRoot(`mongodb://${process.env.MONGO_INITDB_HOST}:${process.env.MONGO_INITDB_PORT}`, {
-    //   dbName: process.env.MONGO_INITDB_DATABASE,
-    //   auth: {
-    //     username: process.env.MONGO_INITDB_ROOT_USERNAME,
-    //     password: process.env.MONGO_INITDB_ROOT_PASSWORD
-    //   }
-    // }),
     MongooseModule.forRootAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
@@ -38,7 +31,6 @@ import { TenantModule } from './tenant/tenant.module';
         })
       },
     }),
-
     TenantModule
   ],
   providers: [
