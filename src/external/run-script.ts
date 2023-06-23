@@ -43,6 +43,13 @@ type TenantCreateVars = {
     tenantId: string;
 }
 
+type TenantDestroyVars = {
+    awsAccessKey: string;
+    awsSecretKey: string;
+    awsSessionToken: string;
+    tenantId: string;
+}
+
 const runScript = (
     vars: TenantCreateVars,
     onData?: (data: any) => void,
@@ -82,4 +89,32 @@ const runScript = (
     });
 }
 
-export { runScript };
+const runDestroyScript = (
+    vars: TenantDestroyVars,
+    onData?: (data: any) => void,
+    onError?: (error: any) => void
+) => {
+    const runner = new ScriptRunner();
+
+    return new Promise((resolve, reject) => {
+        runner.run("sh", [
+            "./src/external/destroy-tenant.sh",
+            vars.awsAccessKey,
+            vars.awsSecretKey,
+            vars.awsSecretKey,
+            vars.tenantId
+        ],
+            ({}),
+            onData,
+            onError,
+            (status) => {
+                if (status === 0) {
+                    resolve(status);
+                } else {
+                    reject(status);
+                }
+            })
+    });
+}
+
+export { runScript, runDestroyScript };

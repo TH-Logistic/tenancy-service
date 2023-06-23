@@ -1,5 +1,6 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUrl, MinLength, isNumberString } from "class-validator";
 import { TenantStatus } from "../entities/tenant.status";
+import { TenantPackage } from "../entities/tenant.package";
 
 class TenantDetail {
     @IsString()
@@ -56,4 +57,7 @@ export class CreateTenantDTO extends TenantDetail {
 
     @IsString()
     logo: string;
+
+    @IsEnum(TenantPackage)
+    package: TenantPackage;
 }

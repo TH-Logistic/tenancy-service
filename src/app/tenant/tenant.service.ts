@@ -5,7 +5,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import { CreateTenantDTO } from "./dto/create-tenant.dto";
 import { UpdateTenantDTO } from "./dto/update-tenant.dto";
 import { TenantStatus } from "./entities/tenant.status";
-import { ScriptRunner, runScript } from "src/external/run-script";
+import { ScriptRunner, runDestroyScript, runScript } from "src/external/run-script";
 import { spawn } from "child_process";
 import { error } from "console";
 import { ConfigService } from "@nestjs/config";
@@ -116,19 +116,45 @@ export class TenantService {
     async suspendTenant(id: string): Promise<boolean> {
         const objectId = new Types.ObjectId(id);
 
-        const result = await this
-            .tenantModel
-            .findByIdAndUpdate(objectId, {
-                $set: {
-                    status: TenantStatus.SUSPENDED
-                }
-            }, { returnOriginal: false })
-            .orFail()
+        let tenant = await this.tenantModel.findById(objectId).orFail();
+        const previousStatus = tenant.status;
 
-        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', ({
-            destinationEmail: result.contactEmail,
-            name: result.name,
-        }));
+        tenant = await tenant.updateOne({ $set: { status: TenantStatus.SUSPENDED } }, { returnOriginal: false });
+
+        // const result = await this
+        //     .tenantModel
+        //     .findByIdAndUpdate(objectId, {
+        //         $set: {
+        //             status: TenantStatus.SUSPENDED
+        //         }
+        //     }, { returnOriginal: true })
+        //     .orFail()
+
+        runDestroyScript(
+            {
+                awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
+                awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
+                awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
+                tenantId: id,
+            },
+            (data) => {
+                console.log(data.toString());
+            }, async (err) => {
+                console.log(error.toString());
+                await tenant.updateOne({ $set: { status: previousStatus } });
+            }).catch(res => {
+                // TODO send email
+            }).then((status) => {
+                console.log(`Completed with status ${status}`)
+                if (status === 0) {
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', ({
+                        destinationEmail: tenant.contactEmail,
+                        name: tenant.name,
+                    }));
+                }
+            });
+
+
 
         return true;
     }

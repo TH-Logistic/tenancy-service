@@ -1,6 +1,7 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { TenantStatus } from "./tenant.status";
 import convertIdFromMongoose from "src/utils/convert-id-from-mongoose";
+import { TenantPackage } from "./tenant.package";
 
 @Schema({
     versionKey: false
@@ -75,6 +76,13 @@ export class Tenant {
         default: TenantStatus.NEW
     })
     status: TenantStatus;
+
+    @Prop({
+        required: true,
+        enum: TenantPackage,
+        default: TenantPackage.BASIC,
+    })
+    package: TenantPackage
 }
 
 export const TenantSchema = convertIdFromMongoose(

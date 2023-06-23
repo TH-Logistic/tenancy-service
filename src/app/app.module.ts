@@ -7,6 +7,8 @@ import { APP_GUARD, Reflector } from '@nestjs/core';
 import { AppGuard } from 'src/config/guard/auth.guard';
 import { HttpModule, HttpService } from '@nestjs/axios';
 import { TenantModule } from './tenant/tenant.module';
+import { ConfigController } from './config/config.controller';
+import { ConfigModule as AppConfigModule } from './config/config.module';
 
 @Module({
   imports: [
@@ -31,7 +33,8 @@ import { TenantModule } from './tenant/tenant.module';
         })
       },
     }),
-    TenantModule
+    TenantModule,
+    AppConfigModule
   ],
   providers: [
     {
