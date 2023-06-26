@@ -37,5 +37,7 @@ lerna-debug.log*
 # ENV
 *.env*
 !.env.example
+.gitignore
 
-temp/infrastructure
+temp/*
+!temp/tenant-id

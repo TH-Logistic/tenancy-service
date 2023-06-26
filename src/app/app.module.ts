@@ -9,6 +9,8 @@ import { HttpModule, HttpService } from '@nestjs/axios';
 import { TenantModule } from './tenant/tenant.module';
 import { ConfigController } from './config/config.controller';
 import { ConfigModule as AppConfigModule } from './config/config.module';
+import { MulterModule } from '@nestjs/platform-express';
+import { AppController } from './app.controller';
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { ConfigModule as AppConfigModule } from './config/config.module';
       provide: APP_GUARD,
     },
   ],
+  controllers: [AppController]
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

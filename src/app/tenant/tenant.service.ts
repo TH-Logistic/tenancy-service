@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { Tenant } from "./entities/tenant.schema";
 import { Model, Types } from "mongoose";
 import { InjectModel } from "@nestjs/mongoose";
-import { CreateTenantDTO } from "./dto/create-tenant.dto";
+import { CreateTenantDTO, TenantActiveDetail } from "./dto/create-tenant.dto";
 import { UpdateTenantDTO } from "./dto/update-tenant.dto";
 import { TenantStatus } from "./entities/tenant.status";
 import { ScriptRunner, runDestroyScript, runScript } from "src/external/run-script";
@@ -43,38 +43,6 @@ export class TenantService {
             status: TenantStatus.NEW
         });
 
-        // runScript(
-        //     {
-        //         awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
-        //         awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
-        //         awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
-        //         dbName: createTenantDTO.dbName,
-        //         dbPassword: createTenantDTO.dbPassword,
-        //         dbUserName: createTenantDTO.dbUsername,
-        //         awsRegion: 'us-east-1',
-        //         appSecret: createTenantDTO.secretKey,
-        //         keyPairName: createTenantDTO.keypairName,
-        //         tenantId: createdTenant.id
-        //     },
-        //     (data) => {
-        //         console.log(data.toString());
-        //     }, async (err) => {
-        //         console.log(error.toString());
-        //         await createdTenant.deleteOne();
-        //     }).catch(res => {
-        //         // TODO send email
-        //     }).then((status) => {
-        //         console.log(`Completed with status ${status}`)
-        //         if (status === 0) {
-
-        //             this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
-        //                 destinationEmail: createTenantDTO.contactEmail,
-        //                 name: createTenantDTO.name,
-        //                 packageName: "Premium"
-        //             }));
-        //         }
-        //     });
-
         return createdTenant;
     }
 
@@ -91,23 +59,59 @@ export class TenantService {
         return result;
     }
 
-    async activeTenant(id: string): Promise<boolean> {
+    async activeTenant(id: string, activeTenantDetail: TenantActiveDetail): Promise<boolean> {
         const objectId = new Types.ObjectId(id);
 
-        const result = await this
+        const originalTenant = await this
             .tenantModel
             .findByIdAndUpdate(objectId, {
                 $set: {
-                    status: TenantStatus.ACTIVE
+                    status: TenantStatus.ACTIVE,
+                    package: activeTenantDetail.package,
                 }
-            }, { returnOriginal: false })
-            .orFail()
+            }, { returnOriginal: true })
+            .orFail();
 
-        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
-            destinationEmail: result.contactEmail,
-            name: result.name,
-            packageName: "Premium"
-        }));
+
+        const previousTenantPackage = originalTenant.package;
+        const previousTenantStatus = originalTenant.status;
+
+        runScript(
+            {
+                awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
+                awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
+                awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
+                dbName: activeTenantDetail.dbName,
+                dbPassword: activeTenantDetail.dbPassword,
+                dbUserName: activeTenantDetail.dbUsername,
+                awsRegion: 'us-east-1',
+                appSecret: activeTenantDetail.secretKey,
+                tenantId: objectId.toString(),
+            },
+            (data) => {
+                console.log(data.toString());
+            }, async (err) => {
+                console.log(err.toString());
+            }).catch((res) => res).then(async (status) => {
+                console.log(`Completed with status ${status}`)
+                if (status === 0) {
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
+                        destinationEmail: originalTenant.contactEmail,
+                        name: originalTenant.name,
+                        packageName: activeTenantDetail.package
+                    }));
+                } else {
+                    await this
+                        .tenantModel
+                        .findByIdAndUpdate(objectId, {
+                            $set: {
+                                package: previousTenantPackage,
+                                status: previousTenantStatus
+                            }
+                        }, { returnOriginal: false })
+                        .orFail();
+                }
+            });
 
         return true;
     }
@@ -115,34 +119,47 @@ export class TenantService {
     async suspendTenant(id: string): Promise<boolean> {
         const objectId = new Types.ObjectId(id);
 
-        let tenant = await this.tenantModel.findById(objectId).orFail();
-        const previousStatus = tenant.status;
+        const originalTenant = await this
+            .tenantModel
+            .findByIdAndUpdate(objectId, {
+                $set: {
+                    status: TenantStatus.SUSPENDED,
+                }
+            }, { returnOriginal: true })
+            .orFail();
 
-        tenant = await tenant.updateOne({ $set: { status: TenantStatus.SUSPENDED } }, { returnOriginal: false });
+        const previousTenantStatus = originalTenant.status;
 
-        // runDestroyScript(
-        //     {
-        //         awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
-        //         awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
-        //         awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
-        //         tenantId: id,
-        //     },
-        //     (data) => {
-        //         console.log(data.toString());
-        //     }, async (err) => {
-        //         console.log(error.toString());
-        //         await tenant.updateOne({ $set: { status: previousStatus } });
-        //     }).catch(res => {
-        //         // TODO send email
-        //     }).then((status) => {
-        //         console.log(`Completed with status ${status}`)
-        //         if (status === 0) {
-        //             this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', ({
-        //                 destinationEmail: tenant.contactEmail,
-        //                 name: tenant.name,
-        //             }));
-        //         }
-        //     });
+        runDestroyScript(
+            {
+                awsAccessKey: this.configService.get('AWS_ACCESS_KEY'),
+                awsSecretKey: this.configService.get('AWS_SECRET_KEY'),
+                awsSessionToken: this.configService.get('AWS_SESSION_TOKEN'),
+                tenantId: id,
+            },
+            (data) => {
+                console.log(data.toString());
+            }, async (err) => {
+                console.log(err.toString());
+
+                await this
+                    .tenantModel
+                    .findByIdAndUpdate(objectId, {
+                        $set: {
+                            status: previousTenantStatus
+                        }
+                    }, { returnOriginal: false })
+                    .orFail();
+
+            }).catch((res) => res).then((status) => {
+                console.log(`Completed with status ${status}`)
+                if (status === 0) {
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', ({
+                        destinationEmail: originalTenant.contactEmail,
+                        name: originalTenant.name,
+                    }));
+                }
+            });
 
         return true;
     }

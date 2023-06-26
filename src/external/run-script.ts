@@ -35,7 +35,6 @@ type TenantCreateVars = {
     awsSecretKey: string;
     awsSessionToken: string;
     awsRegion: string;
-    keyPairName: string;
     dbUserName: string;
     dbPassword: string;
     dbName: string;
@@ -65,7 +64,6 @@ const runScript = (
             vars.awsSecretKey,
             vars.awsSessionToken,
             vars.awsRegion,
-            vars.keyPairName,
             vars.dbName,
             vars.dbUserName,
             vars.dbPassword,
@@ -101,7 +99,7 @@ const runDestroyScript = (
             "./src/external/destroy-tenant.sh",
             vars.awsAccessKey,
             vars.awsSecretKey,
-            vars.awsSecretKey,
+            vars.awsSessionToken,
             vars.tenantId
         ],
             ({}),

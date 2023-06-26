@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
 import { TenantService } from "./tenant.service";
 import { Tenant } from "./entities/tenant.schema";
-import { CreateTenantDTO } from "./dto/create-tenant.dto";
+import { CreateTenantDTO, TenantActiveDetail } from "./dto/create-tenant.dto";
 import { UpdateTenantDTO } from "./dto/update-tenant.dto";
 import { Roles } from "src/config/guard/role.decorator";
 import { UserRole } from "../user/entities/role";
@@ -36,8 +36,8 @@ export class TenantController {
     }
 
     @Post("/:id/active")
-    async activeTenant(@Param('id') id: string): Promise<boolean> {
-        return this.tenantService.activeTenant(id)
+    async activeTenant(@Param('id') id: string, @Body() tenantActiveDetailDTO: TenantActiveDetail): Promise<boolean> {
+        return this.tenantService.activeTenant(id, tenantActiveDetailDTO);
     }
 
     @Post("/:id/suspend")

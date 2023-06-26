@@ -78,11 +78,9 @@ export class Tenant {
     status: TenantStatus;
 
     @Prop({
-        required: true,
         enum: TenantPackage,
-        default: TenantPackage.BASIC,
     })
-    package: TenantPackage
+    package?: TenantPackage
 }
 
 export const TenantSchema = convertIdFromMongoose(

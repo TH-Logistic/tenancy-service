@@ -1,8 +1,9 @@
 import { IsEmail, IsEnum, IsNotEmpty, IsNumberString, IsOptional, IsString, IsUrl, MinLength, isNumberString } from "class-validator";
 import { TenantStatus } from "../entities/tenant.status";
 import { TenantPackage } from "../entities/tenant.package";
+import { OmitType } from "@nestjs/swagger";
 
-class TenantDetail {
+export class TenantActiveDetail {
     @IsString()
     @IsOptional()
     domain: string;
@@ -14,18 +15,18 @@ class TenantDetail {
     dbUsername: string;
 
     @IsString()
+    @MinLength(8)
     @IsNotEmpty()
     dbPassword: string;
 
     @IsString()
     @IsNotEmpty()
-    keypairName: string;
-
-    @IsString()
-    @IsNotEmpty()
     secretKey: string;
+
+    @IsEnum(TenantPackage)
+    package: TenantPackage;
 }
-export class CreateTenantDTO extends TenantDetail {
+export class CreateTenantDTO {
     @IsString()
     name: string;
 
@@ -57,7 +58,4 @@ export class CreateTenantDTO extends TenantDetail {
 
     @IsString()
     logo: string;
-
-    @IsEnum(TenantPackage)
-    package: TenantPackage;
 }
