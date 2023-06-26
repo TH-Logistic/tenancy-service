@@ -10,6 +10,7 @@ import { spawn } from "child_process";
 import { error } from "console";
 import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
+import { lastValueFrom } from "rxjs";
 
 @Injectable()
 export class TenantService {
@@ -95,11 +96,11 @@ export class TenantService {
             }).catch((res) => res).then(async (status) => {
                 console.log(`Completed with status ${status}`)
                 if (status === 0) {
-                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', ({
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', {
                         destinationEmail: originalTenant.contactEmail,
                         name: originalTenant.name,
                         packageName: activeTenantDetail.package
-                    }));
+                    });
                 } else {
                     await this
                         .tenantModel
@@ -154,10 +155,10 @@ export class TenantService {
             }).catch((res) => res).then((status) => {
                 console.log(`Completed with status ${status}`)
                 if (status === 0) {
-                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', ({
+                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', {
                         destinationEmail: originalTenant.contactEmail,
                         name: originalTenant.name,
-                    }));
+                    });
                 }
             });
 

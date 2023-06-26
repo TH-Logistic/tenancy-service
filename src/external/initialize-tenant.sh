@@ -86,10 +86,8 @@ echo "========== Running terraform apply =========="
 docker run \
     -v "$(pwd)"/temp/"$tenant_id"/infrastructure:/infrastructure \
     --rm -t hashicorp/terraform:1.5.1 \
-    -chdir=/infrastructure apply -var-file .tfvars \
-    -var aws_access_key=$aws_access_key \
-    -var aws_secret_key=$aws_secret_key \
-    -var aws_session_token=$aws_session_token \
+    -chdir=/infrastructure apply \
+    -var-file .tfvars \
     -auto-approve
 
 if [ $? -ne 0 ]
