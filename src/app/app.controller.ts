@@ -7,7 +7,7 @@ import { join } from "path";
 export class AppController {
     @Get('/files/keys/:tenantId')
     getFile(@Res() res: Response, @Param('tenantId') tenantId: string) {
-        const file = createReadStream(join(process.cwd(), '/temp/infrastructure/', `${tenantId}.pem`));
+        const file = createReadStream(join(process.cwd(), `/temp/${tenantId}/infrastructure/${tenantId}.pem`));
         file.pipe(res);
     }
 }

@@ -6,11 +6,10 @@ import { CreateTenantDTO, TenantActiveDetail } from "./dto/create-tenant.dto";
 import { UpdateTenantDTO } from "./dto/update-tenant.dto";
 import { TenantStatus } from "./entities/tenant.status";
 import { ScriptRunner, runDestroyScript, runScript } from "src/external/run-script";
-import { spawn } from "child_process";
-import { error } from "console";
 import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
+import { getTenantPackageName } from "./entities/tenant.package";
 
 @Injectable()
 export class TenantService {
@@ -96,11 +95,16 @@ export class TenantService {
             }).catch((res) => res).then(async (status) => {
                 console.log(`Completed with status ${status}`)
                 if (status === 0) {
-                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', {
-                        destinationEmail: originalTenant.contactEmail,
-                        name: originalTenant.name,
-                        packageName: activeTenantDetail.package
-                    });
+                    lastValueFrom(
+                        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', {
+                            destinationEmail: originalTenant.contactEmail,
+                            name: originalTenant.name,
+                            packageName: getTenantPackageName(originalTenant.package)
+                        })
+                    )
+                        .catch(res => res)
+                        .then(res => console.log(res));
+
                 } else {
                     await this
                         .tenantModel
@@ -129,6 +133,10 @@ export class TenantService {
             }, { returnOriginal: true })
             .orFail();
 
+        if (originalTenant.status === TenantStatus.SUSPENDED) {
+            throw new Error('Tenant is already suspended!')
+        }
+
         const previousTenantStatus = originalTenant.status;
 
         runDestroyScript(
@@ -155,10 +163,14 @@ export class TenantService {
             }).catch((res) => res).then((status) => {
                 console.log(`Completed with status ${status}`)
                 if (status === 0) {
-                    this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', {
-                        destinationEmail: originalTenant.contactEmail,
-                        name: originalTenant.name,
-                    });
+                    lastValueFrom(
+                        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', {
+                            destinationEmail: originalTenant.contactEmail,
+                            name: originalTenant.name,
+                        })
+                    )
+                        .catch(res => res)
+                        .then(res => console.log(res));
                 }
             });
 

@@ -56,7 +56,7 @@ const runScript = (
 ): Promise<number> => {
     const runner = new ScriptRunner();
 
-    return new Promise((resolve, reject) => {
+    return new Promise<number>((resolve, reject) => {
         runner.run(
             "sh", [
             "./src/external/initialize-tenant.sh",

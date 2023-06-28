@@ -6,6 +6,7 @@ echo "========== Initialize scripts =========="
 mkdir -p temp && cd ./temp
 mkdir -p $tenant_id && cd ./$tenant_id
 git clone https://github.com/TH-Logistic/infrastructure-dev.git infrastructure
+cd infrastructure && git pull && cd ..
 
 # temp -> tenant_id -> infrastructure
 # Back to parent folder
