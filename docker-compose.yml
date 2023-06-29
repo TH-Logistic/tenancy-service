@@ -35,7 +35,6 @@ services:
       - AWS_SECRET_KEY
       - AWS_SESSION_TOKEN
       - MAIL_URL
-
     depends_on:
       - mongo
 

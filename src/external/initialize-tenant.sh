@@ -1,31 +1,23 @@
-#!bin/bash
-
 tenant_id=${12}
 
-echo "========== Initialize scripts =========="
+echo "========== Initialize working folder =========="
 mkdir -p temp && cd ./temp
 mkdir -p $tenant_id && cd ./$tenant_id
 git clone https://github.com/TH-Logistic/infrastructure-dev.git infrastructure
-cd infrastructure && git pull && cd ..
+cd infrastructure && git pull
 
-# temp -> tenant_id -> infrastructure
-# Back to parent folder
-cd ../../
-
+echo $pwd # Inside infrastructure folder
 echo "========== Running terraform version =========="
-docker run --rm -t hashicorp/terraform:1.5.1 version
+terraform version
 
 echo "========== Running terraform init =========="
+terraform init
 
-docker run \
-    --rm \
-    -t \
-    -v "$(pwd)"/temp/"$tenant_id"/infrastructure:/infrastructure \
-    hashicorp/terraform:1.5.1 -chdir=/infrastructure init
+echo "========== Store tfvars =========="
 
-rm -rf "$(pwd)"/temp/"$tenant_id"/infrastructure/.tfvars
+rm -f .tfvars
 
-cat <<EOT >> "$(pwd)"/temp/"$tenant_id"/infrastructure/.tfvars
+cat <<EOT >> .tfvars
 tenant_unique_id = "${12}"
 
 aws_access_key = "$1"
@@ -84,12 +76,7 @@ EOT
 
 echo "========== Running terraform apply =========="
 
-docker run \
-    -v "$(pwd)"/temp/"$tenant_id"/infrastructure:/infrastructure \
-    --rm -t hashicorp/terraform:1.5.1 \
-    -chdir=/infrastructure apply \
-    -var-file .tfvars \
-    -auto-approve
+terraform apply -var-file .tfvars -auto-approve
 
 if [ $? -ne 0 ]
 then
