@@ -124,7 +124,7 @@ export class TenantService {
                             this.httpService.post(this.configService.get("GATEWAY_URL") + '/mail/tenant-activated', {
                                 destinationEmail: originalTenant.contactEmail,
                                 name: originalTenant.name,
-                                packageName: getTenantPackageName(originalTenant.package),
+                                packageName: getTenantPackageName(activeTenantDetail.package),
                                 ipAddress: feIPAddress
                             })
                         )
