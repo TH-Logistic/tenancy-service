@@ -18,8 +18,6 @@ echo "========== Store tfvars =========="
 rm -f .tfvars
 
 cat <<EOT >> .tfvars
-tenant_unique_id = "${12}"
-
 aws_access_key = "$1"
 aws_secret_key = "$2"
 aws_session_token = "$3"
@@ -34,6 +32,11 @@ app_secret = "$8"
 rds_db_name="${9}"
 rds_username="${10}"
 rds_password="${11}"
+
+tenant_unique_id = "${12}"
+
+root_user="${13}"
+root_password="${14}"
 EOT
 
 # echo "========== Running terraform plan =========="

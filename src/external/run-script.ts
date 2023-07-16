@@ -38,6 +38,8 @@ type TenantCreateVars = {
     dbUserName: string;
     dbPassword: string;
     dbName: string;
+    rootUser: string;
+    rootPassword: string;
     appSecret: string;
     tenantId: string;
 }
@@ -71,7 +73,9 @@ const runScript = (
             vars.dbName,
             vars.dbUserName,
             vars.dbPassword,
-            vars.tenantId
+            vars.tenantId,
+            vars.rootUser,
+            vars.rootPassword
         ],
             ({}),
             onData,
