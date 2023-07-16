@@ -99,38 +99,51 @@ export class TenantService {
             }).catch((res) => res).then(async (status) => {
                 console.log(`Completed with status ${status}`)
 
-                const outputs = await fsPromises.readFile(
-                    join(__dirname, `/temp/${objectId.toString()}/infrastructure/terraform-output.out`),
-                    'utf-8',
-                );
-                const pairs = outputs.split('\n')
+                try {
+                    const outputs = await fsPromises.readFile(
+                        join(__dirname, `../../../temp/${objectId.toString()}/infrastructure/terraform-output.out`),
+                        'utf-8',
+                    );
+                    const pairs = outputs.split('\n')
 
-                const feKey = 'fe_ip'
-                const feIPAddress = pairs
-                    .filter(pair => pair.includes('='))
-                    .map((pair) => {
-                        const keyValue = pair.split('=')
-                        let obj: any = {}
-                        const key = keyValue[0].trim()
-                        obj[key] = keyValue[1].trim()
-                        return obj
-                    })
-                    .find((keyValue) => feKey in keyValue)[feKey]
-
-
-                if (status === 0) {
-                    lastValueFrom(
-                        this.httpService.post(this.configService.get("GATEWAY_URL") + '/mail/tenant-activated', {
-                            destinationEmail: originalTenant.contactEmail,
-                            name: originalTenant.name,
-                            packageName: getTenantPackageName(originalTenant.package),
-                            ipAddress: feIPAddress
+                    const feKey = 'fe_ip'
+                    const feIPAddress = pairs
+                        .filter(pair => pair.includes('='))
+                        .map((pair) => {
+                            const keyValue = pair.split('=')
+                            let obj: any = {}
+                            const key = keyValue[0].trim()
+                            obj[key] = keyValue[1].trim()
+                            return obj
                         })
-                    )
-                        .catch(res => res)
-                        .then(res => console.log(res));
+                        .find((keyValue) => feKey in keyValue)[feKey]
 
-                } else {
+
+                    if (status === 0) {
+                        lastValueFrom(
+                            this.httpService.post(this.configService.get("GATEWAY_URL") + '/mail/tenant-activated', {
+                                destinationEmail: originalTenant.contactEmail,
+                                name: originalTenant.name,
+                                packageName: getTenantPackageName(originalTenant.package),
+                                ipAddress: feIPAddress
+                            })
+                        )
+                            .catch(res => res)
+                            .then(res => console.log(res));
+
+                    } else {
+                        await this
+                            .tenantModel
+                            .findByIdAndUpdate(objectId, {
+                                $set: {
+                                    package: previousTenantPackage,
+                                    status: previousTenantStatus
+                                }
+                            }, { returnOriginal: false })
+                            .orFail();
+                    }
+                } catch (e) {
+                    console.log(e);
                     await this
                         .tenantModel
                         .findByIdAndUpdate(objectId, {
@@ -141,6 +154,7 @@ export class TenantService {
                         }, { returnOriginal: false })
                         .orFail();
                 }
+
             });
 
         return true;
