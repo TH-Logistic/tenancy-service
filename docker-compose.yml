@@ -34,7 +34,7 @@ services:
       - AWS_ACCESS_KEY
       - AWS_SECRET_KEY
       - AWS_SESSION_TOKEN
-      - MAIL_URL
+      - GATEWAY_URL
     networks:
       - app_network
 

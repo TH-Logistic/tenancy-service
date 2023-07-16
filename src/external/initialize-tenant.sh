@@ -80,6 +80,7 @@ EOT
 echo "========== Running terraform apply =========="
 
 terraform apply -var-file .tfvars -auto-approve
+terraform output > terraform-output.out
 
 if [ $? -ne 0 ]
 then

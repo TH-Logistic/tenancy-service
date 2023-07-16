@@ -13,6 +13,6 @@ docker push $REGISTRY/tenant_service:${VERSION}
 
 # https://www.docker.com/blog/how-to-deploy-on-remote-docker-hosts-with-docker-compose/
 
-docker-compose --context remote-server-thinhlh down --rmi all --volumes
-docker-compose --context remote-server-thinhlh --env-file ./env/.env.prod up -d
+docker-compose --context remote-server-thinhlh down tenant_service --rmi all --volumes
+docker-compose --context remote-server-thinhlh --env-file ./env/.env.prod up -d tenant_service
 docker-compose --context remote-server-thinhlh logs --follow

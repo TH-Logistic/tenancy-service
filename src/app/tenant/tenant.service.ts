@@ -10,6 +10,8 @@ import { ConfigService } from "@nestjs/config";
 import { HttpService } from "@nestjs/axios";
 import { lastValueFrom } from "rxjs";
 import { getTenantPackageName } from "./entities/tenant.package";
+import { promises as fsPromises } from 'fs';
+import { join } from 'path';
 
 @Injectable()
 export class TenantService {
@@ -87,6 +89,8 @@ export class TenantService {
                 awsRegion: 'us-east-1',
                 appSecret: activeTenantDetail.secretKey,
                 tenantId: objectId.toString(),
+                rootUser: activeTenantDetail.dbUsername,
+                rootPassword: activeTenantDetail.dbPassword
             },
             (data) => {
                 console.log(data.toString());
@@ -94,12 +98,33 @@ export class TenantService {
                 console.log(err.toString());
             }).catch((res) => res).then(async (status) => {
                 console.log(`Completed with status ${status}`)
+
+                const outputs = await fsPromises.readFile(
+                    join(__dirname, `/temp/${objectId.toString()}/infrastructure/terraform-output.out`),
+                    'utf-8',
+                );
+                const pairs = outputs.split('\n')
+
+                const feKey = 'fe_ip'
+                const feIPAddress = pairs
+                    .filter(pair => pair.includes('='))
+                    .map((pair) => {
+                        const keyValue = pair.split('=')
+                        let obj: any = {}
+                        const key = keyValue[0].trim()
+                        obj[key] = keyValue[1].trim()
+                        return obj
+                    })
+                    .find((keyValue) => feKey in keyValue)[feKey]
+
+
                 if (status === 0) {
                     lastValueFrom(
-                        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-activated', {
+                        this.httpService.post(this.configService.get("GATEWAY_URL") + '/mail/tenant-activated', {
                             destinationEmail: originalTenant.contactEmail,
                             name: originalTenant.name,
-                            packageName: getTenantPackageName(originalTenant.package)
+                            packageName: getTenantPackageName(originalTenant.package),
+                            ipAddress: feIPAddress
                         })
                     )
                         .catch(res => res)
@@ -164,7 +189,7 @@ export class TenantService {
                 console.log(`Completed with status ${status}`)
                 if (status === 0) {
                     lastValueFrom(
-                        this.httpService.post(this.configService.get("MAIL_URL") + '/tenant-suspended', {
+                        this.httpService.post(this.configService.get("GATEWAY_URL") + '/mail/tenant-suspended', {
                             destinationEmail: originalTenant.contactEmail,
                             name: originalTenant.name,
                         })
